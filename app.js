@@ -2,12 +2,37 @@ require("dotenv").config();
 
 const express = require("express");
 const expressLayout = require("express-ejs-layouts");
+const connectDB = require("./server/config/db");
+const session = require("express-session"); // store session in database
+const passport = require("passport"); // for login and password
+const MongoStore = require("connect-mongo"); // store mongo
 
 const app = express();
 const port = 5000;
 
+app.use(
+  session({
+    secret: "keyboard cat",
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI,
+    }),
+    // cookie: { maxAge: new Date(Date.now() + 3600000) },
+    //Date.now() - 30 * 24 * 60 * 60 * 1000
+  })
+);
+
+//initialize
+app.use(passport.initialize());
+app.use(passport.session());
+
+//change to default json
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+//connection to database
+connectDB();
 
 //static Files
 app.use(express.static("public"));
@@ -19,6 +44,7 @@ app.set("view engine", "ejs");
 
 //Routes
 app.use("/", require("./server/routes/index"));
+app.use("/", require("./server/routes/auth"));
 app.use("/", require("./server/routes/dashboard"));
 
 //handle 404
