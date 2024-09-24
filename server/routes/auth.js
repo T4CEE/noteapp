@@ -19,7 +19,7 @@ passport.use(
       //   console.log(profile);
 
       const newUser = {
-        googgleId: profile.id,
+        googleId: profile.id,
         displayName: profile.displayName,
         firstName: profile.name.givenName,
         lastName: profile.name.familyName,
@@ -27,12 +27,12 @@ passport.use(
       };
 
       try {
-        let user = await findOne({ googleId: profile.id });
+        let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
           done(null, user);
         } else {
-          user.create = await User.create(newUser);
+          user = await User.create(newUser);
           done(null, user);
         }
       } catch (error) {
@@ -76,15 +76,24 @@ router.get("/logout", (req, res) => {
 });
 
 //retrieve user after successful authentication
-passport.serializeUser(function(req, res) {
-  document(null, user.id);
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
 });
 
 //retrieve user data from session
-passport.deserializeUser(function(req, res) {
-  User.FindById(id, function(err, user) {
-    done(err, user);
-  });
+// passport.deserializeUser(function(id, done) {
+//   User.findById(id, function(err, user) {
+//     done(err, user);
+//   });
+// });
+
+passport.deserializeUser(async function(id, done) {
+  try {
+    const user = await User.findById(id);
+    done(null, user); // No error, pass the user to `done()`
+  } catch (err) {
+    done(err); // Pass the error to `done()`
+  }
 });
 
 module.exports = router;
